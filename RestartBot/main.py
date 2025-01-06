@@ -9,7 +9,7 @@ configure_logging(level=logging.INFO)
 
 load_dotenv()
 
-bot = discord.Bot(debug_guilds=[1324373556473364490])
+bot = discord.Bot()
 
 @bot.event
 async def on_ready():
