@@ -5,17 +5,16 @@ import logging
 
 from logger import configure_logging
 
-configure_logging(level=logging.INFO)
+configure_logging(level=logging.INFO)                                                   # Подключение логгера, по умолчанию установлен уровень info
 
-load_dotenv()
+load_dotenv()                                                                           # Загрузка .env файла
 
 bot = discord.Bot()
 
-@bot.event
+@bot.event                                                                              # Уведомление о том, что дискорд бот запущен
 async def on_ready():
-    print("Бот успешно запущен и готов к работе")
     logging.info("Бот успешно запущен")
 
 
-bot.load_extension("cogs.restart")                                                       # загрузка кога перезагрузки
-bot.run(os.getenv("BOT_TOKEN"))
+bot.load_extension("cogs.restart")                                                       # Загрузка кога перезагрузки
+bot.run(os.getenv("BOT_TOKEN"))                                                          # Запрос токена бота дискорда из .env файла
