@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord import Option
 import requests
 from dotenv import load_dotenv
-from cogs.ss14_admin_manager.logger import configure_logging
+from ss14_admin_manager.logger import configure_logging
 
 configure_logging(level=logging.INFO)                                               # Подключение логгера, по умолчанию установлен уровень info
 load_dotenv()                                                                       # Загрузка .env файла
