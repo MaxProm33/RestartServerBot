@@ -5,11 +5,7 @@ import discord
 from discord.ext import commands
 from discord import Option
 import requests
-from dotenv import load_dotenv
-from ss14_admin_manager.logger import configure_logging
-
-configure_logging(level=logging.INFO)                                               # Подключение логгера, по умолчанию установлен уровень info
-load_dotenv()                                                                       # Загрузка .env файла
+from utils.config_loader import load_online_bots_config
 
 SS_TOKEN = os.getenv("SS_TOKEN")                                                    # Получение токена администратора из .env файл
 
@@ -19,18 +15,43 @@ URLS = {                                                                        
     "Фронтир": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Апофис": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Деймос": "https://ff.deadspace14.net/admin/actions/round/restartnow",
+    "Союз-1": "https://ff.deadspace14.net/admin/actions/round/restartnow",
+    "Мапперский": "https://ff.deadspace14.net/admin/actions/round/restartnow"
+
+}
+
+
+SERVER_NAME_MAPPING = {                                                              # Словарь соответствий русских и английских названий серверов
+    "Титан": "Titan",
+    "Фобос": "Fobos",
+    "Фронтир": "Frontier",
+    "Деймос": "Deimos",
+    "Союз-1": "Souz1",
+    "Мапперский": "Mapping",
 }
 
 class RestartServerSs14Cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.servers = load_online_bots_config("online_servers_bots.json")
+        self.server_tokens = {server.name: server.admin_token for server in self.servers} # создание словаря с данными из json файла
+        print(self.servers[0].admin_token)
+
 
     def restart_server(self, server_name: str) -> requests.Response | None:             # Функция для перезагрузки сервера
         url = URLS.get(server_name)
+        english_server_name = SERVER_NAME_MAPPING.get(server_name)
+        admin_token = self.server_tokens.get(english_server_name)                       # Получение админ токена для каждого сервера
+
+        if not admin_token:
+            logging.error(f"Токен для сервера {server_name} не найден")
+            return None
+
         headers = {
-            "Authorization": f"SS14Token {SS_TOKEN}",
+            "Authorization": f"SS14Token {admin_token}",
             "Content-Type": "application/json"
         }
+
         try:
             response = requests.post(url, headers=headers, timeout=10)                  # Добавляем таймаут
             response.raise_for_status()                                                 # Вызывает исключение для HTTP ошибок (4xx, 5xx)
@@ -54,6 +75,3 @@ class RestartServerSs14Cog(commands.Cog):
         else:
             await ctx.respond(f"Не удалось перезапустить сервер {server}. "
                               f"Пожалуйста, обратитесь к администратору.")              # При неудаче логгирование происходит в функции
-
-def setup(bot):                                                                         # Загрузка кога
-    bot.add_cog(RestartServerSs14Cog(bot))
