@@ -16,7 +16,7 @@ URLS = {                                                                        
     "Апофис": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Деймос": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Союз-1": "https://ff.deadspace14.net/admin/actions/round/restartnow",
-    "Мапперский": "https://ff.deadspace14.net/admin/actions/round/restartnow"
+    "Мапперский": "https://185.97.255.17:1225/admin/actions/round/restartnow"
 
 }
 
@@ -48,12 +48,11 @@ class RestartServerSs14Cog(commands.Cog):
             return None
 
         headers = {
-            "Authorization": f"SS14Token {admin_token}",
-            "Content-Type": "application/json"
+            "Authorization": f"SS14Token {admin_token}"
         }
 
         try:
-            response = requests.post(url, headers=headers, timeout=10)                  # Добавляем таймаут
+            response = requests.post(url, headers=headers, verify=False, timeout=10)                  # Добавляем таймаут
             response.raise_for_status()                                                 # Вызывает исключение для HTTP ошибок (4xx, 5xx)
             return response
         except requests.exceptions.RequestException as e:
