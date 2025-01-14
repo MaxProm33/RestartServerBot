@@ -1,6 +1,8 @@
 import os
 import logging
 
+import uuid
+import json
 import discord
 from discord.ext import commands
 from discord import Option
@@ -16,7 +18,7 @@ URLS = {                                                                        
     "Апофис": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Деймос": "https://ff.deadspace14.net/admin/actions/round/restartnow",
     "Союз-1": "https://ff.deadspace14.net/admin/actions/round/restartnow",
-    "Мапперский": "https://185.97.255.17:1225/admin/actions/round/restartnow"
+    "Мапперский": "http://185.97.255.17:1225/admin/actions/round/restartnow"
 
 }
 
@@ -38,21 +40,30 @@ class RestartServerSs14Cog(commands.Cog):
         print(self.servers[0].admin_token)
 
 
-    def restart_server(self, server_name: str) -> requests.Response | None:             # Функция для перезагрузки сервера
+    def restart_server(self, server_name: str, ctx: discord.ApplicationContext) -> requests.Response | None:             # Функция для перезагрузки сервера
         url = URLS.get(server_name)
         english_server_name = SERVER_NAME_MAPPING.get(server_name)
         admin_token = self.server_tokens.get(english_server_name)                       # Получение админ токена для каждого сервера
-
         if not admin_token:
             logging.error(f"Токен для сервера {server_name} не найден")
             return None
 
+
+        try:
+            actor_guid = str(uuid.UUID(int=ctx.author.id))
+        except ValueError:
+            self.logger.error(f"Некорректный ID пользователя Discord: {ctx.author.id}. Невозможно преобразовать в GUID.")
+            return None
+        actor_name = ctx.author.name
         headers = {
-            "Authorization": f"SS14Token {admin_token}"
+            "Authorization": f"SS14Token {admin_token}",
+            "Actor": json.dumps({"Guid": actor_guid, "Name": actor_name}),
+            "Content-Type": "application/json"
         }
 
         try:
-            response = requests.post(url, headers=headers, verify=False, timeout=10)                  # Добавляем таймаут
+            response = requests.post(url, headers=headers, timeout=30)                  # Добавляем таймаут
+            logging.info(f"Текст ответа:{response.text}")
             response.raise_for_status()                                                 # Вызывает исключение для HTTP ошибок (4xx, 5xx)
             return response
         except requests.exceptions.RequestException as e:
@@ -66,7 +77,7 @@ class RestartServerSs14Cog(commands.Cog):
 
         await ctx.defer()                                                               # Откладываем ответ для возможности задержки со стороны сервера
 
-        result = self.restart_server(server)
+        result = self.restart_server(server, ctx)
 
         if result:
             await ctx.respond(f"Сервер {server} успешно перезапущен.")
